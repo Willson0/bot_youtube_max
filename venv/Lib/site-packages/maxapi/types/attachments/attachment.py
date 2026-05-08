@@ -1,0 +1,120 @@
+from typing import TYPE_CHECKING, Any
+
+from pydantic import BaseModel, ConfigDict, Field
+
+from ...enums.attachment import AttachmentType
+from ...types.attachments.buttons import InlineButtonUnion
+from ...types.attachments.upload import AttachmentUpload
+from ...types.users import User
+from ...utils.vcf import VcfInfo, parse_vcf_info
+
+if TYPE_CHECKING:
+    from ...bot import Bot
+
+
+class StickerAttachmentPayload(BaseModel):
+    """
+    Данные для вложения типа стикер.
+
+    Attributes:
+        url (str): URL стикера.
+        code (str): Код стикера.
+    """
+
+    url: str
+    code: str
+
+
+class PhotoAttachmentPayload(BaseModel):
+    """
+    Данные для фото-вложения.
+
+    Attributes:
+        photo_id (int): Идентификатор фотографии.
+        token (str): Токен для доступа к фото.
+        url (str): URL фотографии.
+    """
+
+    photo_id: int
+    token: str
+    url: str
+
+
+class OtherAttachmentPayload(BaseModel):
+    """
+    Данные для общих типов вложений (файлы и т.п.).
+
+    Attributes:
+        url (str): URL вложения.
+        token (Optional[str]): Опциональный токен доступа.
+    """
+
+    url: str
+    token: str | None = None
+
+
+class ContactAttachmentPayload(BaseModel):
+    """
+    Данные для контакта.
+
+    Attributes:
+        vcf_info (Optional[str]): Информация в формате vcf.
+        max_info (Optional[User]): Дополнительная информация о пользователе.
+    """
+
+    vcf_info: str = ""  # для корректного определения
+    max_info: User | None = None
+
+    @property
+    def vcf(self) -> VcfInfo:
+        """Доступ к данным из `vcf_info`."""
+
+        return parse_vcf_info(self.vcf_info)
+
+
+class ButtonsPayload(BaseModel):
+    """
+    Данные для вложения с кнопками.
+
+    Attributes:
+        buttons (List[List[InlineButtonUnion]]): Двумерный список
+            inline-кнопок.
+    """
+
+    buttons: list[list[InlineButtonUnion]]
+
+    def pack(self):
+        return Attachment(  # type: ignore[call-arg]
+            type=AttachmentType.INLINE_KEYBOARD,
+            payload=self,
+        )
+
+
+class Attachment(BaseModel):
+    """
+    Универсальный класс вложения с типом и полезной нагрузкой.
+
+    Attributes:
+        type (AttachmentType): Тип вложения.
+        payload (Optional[Union[...] ]): Полезная нагрузка, зависит
+            от типа вложения.
+    """
+
+    type: AttachmentType
+    payload: (
+        AttachmentUpload
+        | PhotoAttachmentPayload
+        | OtherAttachmentPayload
+        | ButtonsPayload
+        | ContactAttachmentPayload
+        | StickerAttachmentPayload
+        | None
+    ) = None
+    bot: Any | None = Field(default=None, exclude=True)
+
+    if TYPE_CHECKING:
+        bot: Bot | None  # type: ignore[no-redef]
+
+    model_config = ConfigDict(
+        use_enum_values=True,
+    )
