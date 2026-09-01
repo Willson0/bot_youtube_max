@@ -62,10 +62,6 @@
 Проект предназначен для стандартной Linux-установки и запуска через `systemctl`.
 
 ### 1. Клонирование репозитория
-```bash
-git clone https://github.com/your-username/your-repository.git
-cd your-repository
-```
 
 ### 2. Создание виртуального окружения
 
