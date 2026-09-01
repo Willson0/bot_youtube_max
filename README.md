@@ -136,16 +136,6 @@ sudo systemctl status max-bot
 
 ---
 
-## Скриншоты интерфейса
-
-> Один скриншот можно заменить на реальный файл из папки `assets`.
-
-```md
-!MAX Bot UI
-```
-
----
-
 ## Автор
 
 GitHub: https://github.com/Willson0
